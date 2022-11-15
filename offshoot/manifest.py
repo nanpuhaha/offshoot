@@ -32,11 +32,10 @@ class Manifest:
             f.seek(0)
             manifest = json.loads(f.read())
 
-            exec("from %s.%s.plugin import %s" % (
-                offshoot.config["file_paths"]["plugins"],
-                plugin_name,
-                plugin_name
-            ))
+            exec(
+                f'from {offshoot.config["file_paths"]["plugins"]}.{plugin_name}.plugin import {plugin_name}'
+            )
+
 
             plugin_class = eval(plugin_name)
 
@@ -64,14 +63,20 @@ class Manifest:
                 f.write(json.dumps(manifest, indent=4))
 
     def plugin_files_for_pluggable(self, pluggable):
-        files = list()
+        files = []
 
         with open(self.file_path, "r") as f:
             manifest = json.loads(f.read())
 
         for name, metadata in manifest["plugins"].items():
-            for file in metadata["files"]:
-                if file.get("pluggable") == pluggable:
-                    files.append(("plugins/%s/files/%s".replace("/", os.sep) % (name, file.get("path")), file.get("pluggable")))
+            files.extend(
+                (
+                    "plugins/%s/files/%s".replace("/", os.sep)
+                    % (name, file.get("path")),
+                    file.get("pluggable"),
+                )
+                for file in metadata["files"]
+                if file.get("pluggable") == pluggable
+            )
 
         return files

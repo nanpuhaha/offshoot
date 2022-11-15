@@ -31,25 +31,39 @@ def execute():
 
 
 def install(plugin):
-    print("OFFSHOOT: Attempting to install %s..." % plugin)
+    print(f"OFFSHOOT: Attempting to install {plugin}...")
 
     plugin_directory = offshoot.config.get("file_paths").get("plugins")
     plugin_path = "%s/%s/plugin.py".replace("/", os.sep) % (plugin_directory, plugin)
 
     plugin_module_string = plugin_path.replace(os.sep, ".").replace(".py", "")
 
-    subprocess.call([sys.executable.split(os.sep)[-1], "-m", "%s" % plugin_module_string, "install"])
+    subprocess.call(
+        [
+            sys.executable.split(os.sep)[-1],
+            "-m",
+            f"{plugin_module_string}",
+            "install",
+        ]
+    )
 
 
 def uninstall(plugin):
-    print("OFFSHOOT: Attempting to uninstall %s..." % plugin)
+    print(f"OFFSHOOT: Attempting to uninstall {plugin}...")
 
     plugin_directory = offshoot.config.get("file_paths").get("plugins")
     plugin_path = "%s/%s/plugin.py".replace("/", os.sep) % (plugin_directory, plugin)
 
     plugin_module_string = plugin_path.replace(os.sep, ".").replace(".py", "")
 
-    subprocess.call([sys.executable.split(os.sep)[-1], "-m", "%s" % plugin_module_string, "uninstall"])
+    subprocess.call(
+        [
+            sys.executable.split(os.sep)[-1],
+            "-m",
+            f"{plugin_module_string}",
+            "uninstall",
+        ]
+    )
 
 
 def init():

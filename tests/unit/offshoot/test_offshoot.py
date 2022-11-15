@@ -175,7 +175,7 @@ def test_base_should_be_able_to_validate_a_plugin_file_according_to_its_pluggabl
             if expected_message in validation_message:
                 expected_messages.remove(expected_message)
 
-    assert len(expected_messages) == 0
+    assert not expected_messages
 
 
 def test_base_should_be_able_to_return_a_list_of_installed_plugins():

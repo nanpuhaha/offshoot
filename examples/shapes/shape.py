@@ -12,7 +12,7 @@ class Shape(offshoot.Pluggable):
 
     @property
     def shape_name(self):
-        return "Shape: %s" % self.name
+        return f"Shape: {self.name}"
 
     @property
     def shape_sides(self):

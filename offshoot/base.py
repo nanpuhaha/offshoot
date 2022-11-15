@@ -47,11 +47,11 @@ def generate_configuration_file():
 
 
 def map_pluggable_classes(config):
-    pluggable_classes = dict()
+    pluggable_classes = {}
 
     for m in config.get("modules"):
         try:
-            exec("import %s" % m)
+            exec(f"import {m}")
             classes = inspect.getmembers(sys.modules[m], inspect.isclass)
 
             for c in classes:
@@ -67,7 +67,7 @@ def map_pluggable_classes(config):
 
 def validate_plugin_file(file_path, pluggable, directives):
     is_valid = True
-    messages = list()
+    messages = []
 
     with open(file_path, "r") as f:
         syntax_tree = ast.parse(f.read())
@@ -95,7 +95,10 @@ def validate_plugin_file(file_path, pluggable, directives):
 
                 if len(current_expected):
                     is_valid = False
-                    messages.append("%s: Some expected methods are missing from the class: %s" % (class_name, ", ".join(current_expected)))
+                    messages.append(
+                        f'{class_name}: Some expected methods are missing from the class: {", ".join(current_expected)}'
+                    )
+
 
     if seen_pluggable is False:
         is_valid = False
@@ -108,12 +111,10 @@ def installed_plugins():
     manifest = Manifest()
     plugins = manifest.list_plugins()
 
-    installed = list()
-
-    for name, plugin in plugins.items():
-        installed.append("%s - %s" % (plugin.get("name"), plugin.get("version")))
-
-    return installed
+    return [
+        f'{plugin.get("name")} - {plugin.get("version")}'
+        for name, plugin in plugins.items()
+    ]
 
 
 def discover(pluggable, scope=None, selection=None):
@@ -121,8 +122,8 @@ def discover(pluggable, scope=None, selection=None):
 
     plugin_file_paths = manifest.plugin_files_for_pluggable(pluggable)
 
-    valid_class_names = list()
-    import_statements = list()
+    valid_class_names = []
+    import_statements = []
 
     for plugin_file_path, pluggable in plugin_file_paths:
         plugin_module = plugin_file_path.replace(os.sep, ".").replace(".py", "")
@@ -133,12 +134,12 @@ def discover(pluggable, scope=None, selection=None):
             if selection:
                 if isinstance(selection, str):
                     selection = [selection]
-                        
-                if not plugin_class in selection:
+
+                if plugin_class not in selection:
                     continue
-            
+
             valid_class_names.append(plugin_class)
-            import_statements.append("from %s import %s" % (plugin_module, plugin_class))
+            import_statements.append(f"from {plugin_module} import {plugin_class}")
 
     for import_statement in import_statements:
         if scope is not None:
@@ -147,14 +148,13 @@ def discover(pluggable, scope=None, selection=None):
             exec(import_statement)
 
     if scope is None:
-        class_mapping = dict()
+        return {
+            valid_class_name: eval(valid_class_name)
+            for valid_class_name in valid_class_names
+        }
 
-        for valid_class_name in valid_class_names:
-            class_mapping[valid_class_name] = eval(valid_class_name)
-
-        return class_mapping
     else:
-        return dict()
+        return {}
 
 
 def file_contains_pluggable(file_path, pluggable):

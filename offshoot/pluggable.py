@@ -32,7 +32,7 @@ class Pluggable:
 
     @classmethod
     def methods_with_decorator(cls, decorator):
-        methods = list()
+        methods = []
 
         if decorator not in cls.allowed_decorators():
             return methods
@@ -49,7 +49,7 @@ class Pluggable:
 
     @classmethod
     def _find_decorators(cls):
-        result = dict()
+        result = {}
 
         def visit_FunctionDef(node):
             result[node.name] = [ast.dump(e) for e in node.decorator_list]

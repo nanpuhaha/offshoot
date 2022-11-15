@@ -63,23 +63,26 @@ class Plugin:
 
         manifest = offshoot.Manifest()
 
-        missing_plugin_names = list()
+        missing_plugin_names = [
+            plugin_name
+            for plugin_name in cls.plugins
+            if not manifest.contains_plugin(plugin_name)
+        ]
 
-        for plugin_name in cls.plugins:
-            if not manifest.contains_plugin(plugin_name):
-                missing_plugin_names.append(plugin_name)
 
         if len(missing_plugin_names):
-            raise PluginError("One or more plugin dependencies are not met: %s. Please install them before continuing..." % ", ".join(missing_plugin_names))
+            raise PluginError(
+                f'One or more plugin dependencies are not met: {", ".join(missing_plugin_names)}. Please install them before continuing...'
+            )
 
     @classmethod
     def install_files(cls):
         print("\nOFFSHOOT PLUGIN INSTALL: Installing files...\n")
 
         is_success = True
-        install_messages = list()
+        install_messages = []
 
-        installed_files = list()
+        installed_files = []
         pluggable_classes = offshoot.pluggable_classes()
 
         try:
@@ -103,7 +106,10 @@ class Plugin:
                     pluggable_classes[file_dict["pluggable"]].on_file_install(**file_dict)
 
             if not is_success:
-                raise PluginError("Offshoot Plugin File Install Errors: %s" % "".join(install_messages))
+                raise PluginError(
+                    f'Offshoot Plugin File Install Errors: {"".join(install_messages)}'
+                )
+
         except PluginError as e:
             print("\nThere was a problem during installation... Reverting!")
 
@@ -135,11 +141,11 @@ class Plugin:
             if not os.path.isdir(configuration_path):
                 raise PluginError("The plugin configuration directory ('%s') doesn't exist! Either create it or modify the Offshoot configuration file to point to an existing directory and restart the installation." % configuration_path)
 
-        if not len(cls.config or dict()):
+        if not len(cls.config or {}):
             return None
 
         if offshoot.config["sandbox_configuration_keys"]:
-            config = dict()
+            config = {}
             config[cls.name] = cls.config
         else:
             config = cls.config
@@ -149,7 +155,7 @@ class Plugin:
                 f.write(yaml.dump(config))
         else:
             with open(offshoot.config["file_paths"]["config"], "r") as f:
-                existing_config = yaml.safe_load(f.read()) or dict()
+                existing_config = yaml.safe_load(f.read()) or {}
                 config = {**config, **existing_config}
 
             with open(offshoot.config["file_paths"]["config"], "w") as f:
@@ -168,7 +174,7 @@ class Plugin:
             if not os.path.isdir(configuration_path):
                 raise PluginError("The plugin configuration directory ('%s') doesn't exist! Either create it or modify the Offshoot configuration file to point to an existing directory and restart the installation." % configuration_path)
 
-        if not len(cls.config or dict()):
+        if not len(cls.config or {}):
             return None
 
         if os.path.isfile(offshoot.config["file_paths"]["config"]):
@@ -197,7 +203,7 @@ class Plugin:
             if not os.path.isdir(libraries_path):
                 raise PluginError("The plugin libraries directory ('%s') doesn't exist! Either create it or modify the Offshoot configuration file to point to an existing directory and restart the installation." % libraries_path)
 
-        if not len(cls.libraries or list()):
+        if not len(cls.libraries or []):
             return None
 
         cls._write_plugin_requirement_blocks_to(offshoot.config["file_paths"]["libraries"])
@@ -217,7 +223,7 @@ class Plugin:
             if not os.path.isdir(libraries_path):
                 raise PluginError("The plugin libraries directory ('%s') doesn't exist! Either create it or modify the Offshoot configuration file to point to an existing directory and restart the installation." % libraries_path)
 
-        if not len(cls.libraries or list()):
+        if not len(cls.libraries or []):
             return None
 
         cls._remove_plugin_requirement_block_from(offshoot.config["file_paths"]["libraries"])
@@ -232,7 +238,10 @@ class Plugin:
         pluggable_classes = offshoot.pluggable_classes()
 
         if pluggable not in pluggable_classes:
-            raise PluginError("The Plugin definition specifies an invalid pluggable: %s => %s" % (file_path, pluggable))
+            raise PluginError(
+                f"The Plugin definition specifies an invalid pluggable: {file_path} => {pluggable}"
+            )
+
 
         pluggable_class = pluggable_classes[pluggable]
 
@@ -244,22 +253,20 @@ class Plugin:
 
     @classmethod
     def _generate_plugin_requirement_block(cls):
-        requirement_lines = ["### %s Requirements ###" % cls.name]
+        requirement_lines = [f"### {cls.name} Requirements ###"]
 
-        for library in sorted(cls.libraries):
-            requirement_lines.append(library)
-
+        requirement_lines.extend(iter(sorted(cls.libraries)))
         requirement_lines.append("######")
 
         return requirement_lines
 
     @classmethod
     def _extract_plugin_requirement_blocks_from(cls, file_path):
-        plugin_requirement_blocks = dict()
+        plugin_requirement_blocks = {}
         current_plugin = None
 
         if not os.path.isfile(file_path):
-            return dict()
+            return {}
 
         with open(file_path, "r") as f:
             for line in f:
@@ -284,7 +291,10 @@ class Plugin:
     @classmethod
     def _write_plugin_requirement_blocks_to(cls, file_path):
         plugin_requirement_blocks = cls._extract_plugin_requirement_blocks_from(file_path)
-        plugin_requirement_blocks["%s Requirements" % cls.name] = cls._generate_plugin_requirement_block()
+        plugin_requirement_blocks[
+            f"{cls.name} Requirements"
+        ] = cls._generate_plugin_requirement_block()
+
 
         with open(file_path, "w") as f:
             for name, requirements in plugin_requirement_blocks.items():
@@ -294,7 +304,7 @@ class Plugin:
     @classmethod
     def _remove_plugin_requirement_block_from(cls, file_path):
         plugin_requirement_blocks = cls._extract_plugin_requirement_blocks_from(file_path)
-        plugin_requirement_blocks.pop("%s Requirements" % cls.name)
+        plugin_requirement_blocks.pop(f"{cls.name} Requirements")
 
         with open(file_path, "w") as f:
             for name, requirements in plugin_requirement_blocks.items():
